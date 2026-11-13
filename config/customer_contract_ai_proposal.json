@@ -1,0 +1,29 @@
+{
+    "dataset": "customers",
+    "version": "1.0",
+    "description": "Proposed customer data contract",
+    "columns": {
+        "customer_id": {
+            "type": "integer",
+            "required": true,
+            "unique": true
+        },
+        "customer_name": {
+            "type": "string",
+            "required": true
+        },
+        "email": {
+            "type": "string",
+            "required": true,
+            "format": "email"
+        },
+        "age": {
+            "type": "integer",
+            "required": true
+        },
+        "city": {
+            "type": "string",
+            "required": true
+        }
+    }
+}

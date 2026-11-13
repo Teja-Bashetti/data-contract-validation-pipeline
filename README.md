@@ -1,6 +1,10 @@
 # Data Contract & Schema Evolution Validation Pipeline
 
-A Python-based data engineering project that validates customer data from CSV files and REST APIs using JSON-based data contracts. It detects schema changes, performs data quality checks, separates valid and rejected records, and tracks pipeline execution through logging, metrics, and automated tests.
+A Python-based data engineering project that validates customer data from CSV files and REST APIs using JSON-based data contracts.
+
+The pipeline detects schema changes, performs data quality checks, separates valid and rejected records, transforms customer data, publishes records into SQLite, and tracks execution through logging, metrics, and automated tests.
+
+It also includes an AI-assisted data contract generator using a locally hosted Ollama model.
 
 ## Project Overview
 
@@ -32,43 +36,82 @@ flowchart TD
 ## Key Features
 
 ### 1. Multiple Data Sources
+
 - Read customer records from CSV files.
 - Ingest customer data from REST APIs.
 - Process datasets containing 100,000 records.
 
 ### 2. Data Contract Validation
+
 - Define expected schemas using JSON contracts.
 - Validate required and optional columns.
 - Check expected data types.
 - Identify breaking and non-breaking schema changes.
 
 ### 3. Data Quality Checks
+
 - Validate required fields.
 - Check email formats.
 - Detect duplicate customer IDs.
 - Validate minimum and maximum values.
-- Capture validation errors and separate rejected records.
+- Capture validation errors.
+- Separate valid and rejected records.
 
 ### 4. Data Transformation
+
 - Standardize customer names and city values.
 - Normalize email addresses.
 - Convert numeric columns to appropriate data types.
+- Preserve the original input DataFrame.
 
-### 5. Database Publishing
-- Store validated customer records in SQLite.
-- Use customer IDs to support record updates.
+### 5. Database Publishing and Idempotency
 
-### 6. Logging and Monitoring
+- Publish validated customer records into SQLite.
+- Use customer IDs as primary keys.
+- Insert new customer records.
+- Update existing records using SQLite UPSERT.
+- Test repeated publishing to ensure duplicate customer records are not created.
+
+### 6. SQL Demonstration
+
+Includes SQL queries to:
+
+- View published customer records.
+- Count total customers.
+- Group customers by city.
+- Filter customers by age.
+- Check duplicate customer IDs.
+- Review pipeline metadata.
+- Count records by pipeline run.
+
+### 7. AI-Assisted Data Contract Generation
+
+Uses a locally hosted Ollama model (`qwen2.5:1.5b`) to suggest a JSON data contract from a CSV sample.
+
+The AI generator:
+
+- Reads CSV columns and sample records.
+- Sends the sample to a local language model.
+- Generates a proposed JSON contract.
+- Checks the basic structure and supported rules.
+- Saves the proposal separately from the production contract.
+
+**Important:** AI-generated contracts are suggestions. They must be reviewed before being used in production. Actual pipeline validation remains rule-based and deterministic.
+
+### 8. Logging and Monitoring
+
 - Record pipeline execution details.
 - Track run IDs and processing timestamps.
 - Capture valid and rejected record counts.
 - Generate execution metrics.
 
-### 7. Automated Testing
+### 9. Automated Testing
+
 - Test API ingestion and retry behavior.
 - Test schema compatibility.
 - Test data quality validation.
 - Test transformations and pipeline metadata.
+- Test database idempotency.
 
 ## Technology Stack
 
@@ -79,8 +122,11 @@ flowchart TD
 | JSON | Data contract definitions |
 | REST API | External data ingestion |
 | SQLite | Database publishing |
+| SQL | Data querying |
 | Pytest | Automated testing |
 | Requests | API communication |
+| Ollama | Local AI contract generation |
+| Qwen 2.5 1.5B | Local language model |
 | Git & GitHub | Version control |
 
 ## Project Structure
@@ -92,9 +138,26 @@ data-contract-validation-pipeline/
 │   ├── customer_api_contract.json
 │   ├── customer_contract.json
 │   ├── customer_contract_v1.json
-│   └── customer_contract_breaking.json
+│   ├── customer_contract_breaking.json
+│   └── customer_contract_ai_proposal.json
+│
+├── data/
+│   ├── input/
+│   ├── valid/
+│   ├── rejected/
+│   └── customer_data.db
+│
+├── docs/
+│   └── TROUBLESHOOTING.md
+│
+├── logs/
+├── reports/
+│
+├── sql/
+│   └── demo_queries.sql
 │
 ├── src/
+│   ├── __init__.py
 │   ├── api_ingestion.py
 │   ├── contract_validator.py
 │   ├── data_quality.py
@@ -117,16 +180,16 @@ data-contract-validation-pipeline/
 │   ├── test_pipeline.py
 │   └── test_quality.py
 │
-├── .gitignore
-├── requirements.txt
+├── ai_contract_generator.py
 ├── run_api_pipeline.py
 ├── run_benchmark.py
-├── run_ingestion.py
-├── test_schema_evolution.py
+├── run_sql_demo.py
+├── requirements.txt
+├── .gitignore
 └── README.md
 ```
 
-Generated datasets, logs, database files, and reports are excluded from version control.
+Generated datasets, logs, database files, and reports are kept locally and excluded from version control where configured.
 
 ## Installation and Setup
 
@@ -160,7 +223,7 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-## Running the Pipelines
+## Running the Pipeline
 
 ### CSV Data Pipeline
 
@@ -186,15 +249,63 @@ python -m src.generate_test_data
 python run_benchmark.py
 ```
 
-## Automated Testing
+## SQL Demonstration
 
-Execute the test suite:
+First run the pipeline so that customer records are available in SQLite.
+
+Then execute:
 
 ```bash
-pytest -v
+python run_sql_demo.py
 ```
 
-**Latest verified test result:** 16 passed.
+The SQL queries are also available in:
+
+```text
+sql/demo_queries.sql
+```
+
+## AI Contract Generation
+
+The AI feature is optional. The main data pipeline does not require Ollama.
+
+### 1. Install Ollama
+
+Download and install Ollama from:
+
+https://ollama.com/
+
+### 2. Download the model
+
+```bash
+ollama pull qwen2.5:1.5b
+```
+
+### 3. Generate an AI contract proposal
+
+```bash
+python ai_contract_generator.py
+```
+
+The generated proposal is saved to:
+
+```text
+config/customer_contract_ai_proposal.json
+```
+
+Review the proposal before considering it for production use.
+
+## Automated Testing
+
+Run the complete test suite:
+
+```bash
+python -m pytest -v
+```
+
+**Latest verified result: 17 passed in 1.39 seconds.**
+
+The test suite includes API retry handling, schema compatibility, data quality validation, transformations, metadata checks, and database idempotency.
 
 ## Performance Benchmark
 
@@ -209,7 +320,7 @@ Latest recorded benchmark for 100,000 customer records:
 | Processing time | 2.174 seconds |
 | Success rate | 100% |
 
-Performance results may vary depending on the execution environment.
+Performance results may vary depending on the execution environment and input data.
 
 ## Pipeline Outputs
 
@@ -220,8 +331,15 @@ The pipeline generates:
 - SQLite database records.
 - Pipeline execution logs.
 - Run metrics and benchmark reports.
+- AI-generated contract proposals.
 
-These generated files are kept locally and excluded from the GitHub repository.
+These generated files are kept locally and excluded from the GitHub repository where configured.
+
+## Troubleshooting
+
+For common installation, execution, database, testing, and Ollama errors, see:
+
+[docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)
 
 ## Engineering Concepts Demonstrated
 
@@ -231,7 +349,10 @@ These generated files are kept locally and excluded from the GitHub repository.
 - Data quality frameworks.
 - Data transformation.
 - API integration and retry handling.
-- Database publishing.
+- SQLite database publishing and UPSERT.
+- Idempotent data processing.
+- SQL querying.
+- AI-assisted data contract generation.
 - Logging and monitoring.
 - Automated testing.
 - Performance benchmarking.
@@ -247,6 +368,6 @@ These generated files are kept locally and excluded from the GitHub repository.
 
 ---
 
-**Project:**Data Contract & Schema Evolution Validation Pipeline  
-**Language:**Python  
+**Project:** Data Contract & Schema Evolution Validation Pipeline
+**Language:** Python
 **Repository:** [GitHub](https://github.com/Teja-Bashetti/data-contract-validation-pipeline)

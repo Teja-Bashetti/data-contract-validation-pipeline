@@ -247,6 +247,6 @@ These generated files are kept locally and excluded from the GitHub repository.
 
 ---
 
-**Project:** Data Contract & Schema Evolution Validation Pipeline  
-**Language:** Python  
+**Project:**Data Contract & Schema Evolution Validation Pipeline  
+**Language:**Python  
 **Repository:** [GitHub](https://github.com/Teja-Bashetti/data-contract-validation-pipeline)

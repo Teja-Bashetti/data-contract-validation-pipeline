@@ -1,0 +1,37 @@
+
+{
+  "dataset": "customers",
+  "version": "1.0",
+  "description": "Data contract for customer records",
+
+  "columns": {
+    "customer_id": {
+      "type": "integer",
+      "required": true,
+      "unique": true
+    },
+
+    "customer_name": {
+      "type": "string",
+      "required": true
+    },
+
+    "email": {
+      "type": "string",
+      "required": true,
+      "format": "email"
+    },
+
+    "age": {
+      "type": "integer",
+      "required": true,
+      "min": 18,
+      "max": 100
+    },
+
+    "city": {
+      "type": "string",
+      "required": true
+    }
+  }
+}

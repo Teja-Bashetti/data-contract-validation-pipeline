@@ -1,0 +1,40 @@
+
+# Python cache
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Virtual environment
+.venv/
+venv/
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# IDE settings
+.vscode/
+.idea/
+
+# Logs
+logs/*.log
+
+# Generated database
+data/*.db
+
+# Generated input and output data
+data/input/
+data/valid/
+data/rejected/
+
+# Generated reports
+reports/*.csv
+
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.bak

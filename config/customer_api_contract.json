@@ -1,0 +1,25 @@
+
+{
+    "dataset": "api_customers",
+    "version": "1.0",
+    "columns": {
+        "customer_id": {
+            "type": "integer",
+            "required": true,
+            "unique": true
+        },
+        "customer_name": {
+            "type": "string",
+            "required": true
+        },
+        "email": {
+            "type": "string",
+            "required": true,
+            "format": "email"
+        },
+        "city": {
+            "type": "string",
+            "required": true
+        }
+    }
+}

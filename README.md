@@ -303,8 +303,7 @@ Run the complete test suite:
 python -m pytest -v
 ```
 
-**Latest verified result: 17 passed in 1.39 seconds.**
-
+**Latest verified result: 20 passed in 1.80 seconds.**
 The test suite includes API retry handling, schema compatibility, data quality validation, transformations, metadata checks, and database idempotency.
 
 ## Performance Benchmark
@@ -356,6 +355,63 @@ For common installation, execution, database, testing, and Ollama errors, see:
 - Logging and monitoring.
 - Automated testing.
 - Performance benchmarking.
+
+## Customer History Tracking (SCD Type 2)
+
+The pipeline maintains customer change history using Slowly Changing Dimension Type 2.
+
+When a customer's business attributes change:
+- The previous history record is closed using `effective_to` and `is_current = 0`.
+- A new version is inserted with `effective_to = NULL` and `is_current = 1`.
+- Unchanged customer data does not create another history version.
+- Changes to run metadata alone do not create a history version.
+
+The `customers` table stores the latest customer state. The `customer_history` table preserves tracked versions.
+
+### Customer Data Dictionary
+
+#### customers
+
+| Column | Description |
+|---|---|
+| customer_id | Unique customer identifier and primary key |
+| customer_name | Customer name |
+| email | Customer email address |
+| age | Customer age |
+| city | Customer city |
+| phone_number | Customer phone number |
+| run_id | Pipeline execution identifier |
+| source_file | Source file name |
+| processed_at | Processing timestamp in ISO-8601 format |
+
+#### customer_history
+
+| Column | Description |
+|---|---|
+| history_id | Unique history record identifier |
+| customer_id | Customer business identifier |
+| customer_name | Customer name for this version |
+| email | Customer email for this version |
+| age | Customer age for this version |
+| city | Customer city for this version |
+| phone_number | Customer phone number for this version |
+| effective_from | Start timestamp of this version |
+| effective_to | End timestamp; NULL for current version |
+| is_current | 1 for current version; 0 for historical version |
+| run_id | Pipeline execution identifier |
+| source_file | Source file name |
+| processed_at | Processing timestamp |
+
+### SCD Type 2 Tests
+
+Automated tests cover:
+- Initial customer history insertion.
+- Customer updates preserving previous versions.
+- Identical reruns not creating additional history versions.
+
+### Known Limitation
+
+Historical versions are preserved from the point history tracking is enabled. Backfilling existing customers creates an initial snapshot; it cannot reconstruct changes from before implementation.
 
 ## Future Enhancements
 
